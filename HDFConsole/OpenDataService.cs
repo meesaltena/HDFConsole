@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Formats.Asn1;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace HDFConsole
@@ -19,61 +21,48 @@ namespace HDFConsole
             };
         }
 
-        public async Task<OpenDataResponse?> GetRecentFiles(CancellationToken token = default(CancellationToken))
+        public async Task<OpenDataResponse?> GetRecentFiles(OpenDataDataSets datasetName, CancellationToken token = default(CancellationToken))
         {
             try
             {
-                using HttpClient httpClient = _httpClientFactory.CreateClient("AuthorizedClient");
-
-                using Stream responseStream = await httpClient.GetStreamAsync("", token);
-                
-                OpenDataResponse? res = await JsonSerializer.DeserializeAsync<OpenDataResponse>(responseStream,_jsonOptions,token);
-
-                _logger.LogInformation("OpenDataService got response with {0} files", res?.Files.Count);
-
-                return res;
+                using Stream responseStream = await GetAsync("AuthorizedClient", datasetName, token, queryParam: "?sorting=desc");
+                return await JsonSerializer.DeserializeAsync<OpenDataResponse>(responseStream, _jsonOptions, token);
             }
             catch (Exception ex)
             {
                 _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
-            return null;
+            return await Task.FromResult<OpenDataResponse?>(null);
         }
 
-        public async Task<Stream> DownloadFile(string fileName, CancellationToken token = default(CancellationToken))
+        public async Task<Stream> DownloadFile(OpenDataDataSets datasetName, string fileName, CancellationToken token = default(CancellationToken))
         {
             try
-            {
-                using HttpClient httpClient = _httpClientFactory.CreateClient("AnonymousClient");
-                TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetTemporaryDownloadUrl(fileName, token);
+            {          
+                TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetTemporaryDownloadUrl(datasetName, fileName, token);
 
-                if(temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
+                if (temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
                 {
                     _logger.LogError("Temporary download URL is null");
                     return await Task.FromResult<Stream>(Stream.Null);
-                }   
-               
-                return await httpClient.GetStreamAsync(temporaryDownloadUrlResponse.TemporaryDownloadUrl, token);
+                }
+
+                return await GetUriAsync("AnonymousClient", token, temporaryDownloadUrlResponse.TemporaryDownloadUrl);
             }
             catch (Exception ex)
             {
                 _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
 
-             return await Task.FromResult<Stream>(Stream.Null);
+            return await Task.FromResult<Stream>(Stream.Null);
         }
 
-        private async Task<TemporaryDownloadUrlResponse?> GetTemporaryDownloadUrl(string fileName, CancellationToken token = default(CancellationToken))
+        private async Task<TemporaryDownloadUrlResponse?> GetTemporaryDownloadUrl(OpenDataDataSets datasetName, string fileName, CancellationToken token = default(CancellationToken))
         {
             try
             {
-                using HttpClient httpClient = _httpClientFactory.CreateClient("AuthorizedClient");
-                using Stream responseStream = await httpClient.GetStreamAsync($"{fileName}/url", token);
-                TemporaryDownloadUrlResponse? res = await JsonSerializer.DeserializeAsync<TemporaryDownloadUrlResponse>(responseStream, _jsonOptions, token);
-
-                _logger.LogInformation("OpenDataService got temporary dowload URL last modified at {0}", res?.LastModified);
-
-                return res;
+                using Stream responseStream = await GetAsync("AuthorizedClient", datasetName, token, $"{fileName}/url");
+                return await JsonSerializer.DeserializeAsync<TemporaryDownloadUrlResponse>(responseStream, _jsonOptions, token);
             }
             catch (Exception ex)
             {
@@ -81,5 +70,45 @@ namespace HDFConsole
             }
             return await Task.FromResult<TemporaryDownloadUrlResponse?>(null);
         }
+
+        private async Task<Stream> GetUriAsync(string httpClientName, CancellationToken token = default(CancellationToken), string uri = "")
+        {
+            using HttpClient httpClient = _httpClientFactory.CreateClient(httpClientName);
+            //TODO fix
+            httpClient.BaseAddress = new Uri((uri ?? throw new ArgumentNullException()));
+            return await httpClient.GetStreamAsync(uri, token);
+        }
+
+        private async Task<Stream> GetAsync(string httpClientName, OpenDataDataSets datasetName, CancellationToken token = default(CancellationToken), string path = "", string queryParam = "")
+        {
+            using HttpClient httpClient = _httpClientFactory.CreateClient(httpClientName);
+            return await GetAsync(httpClient, datasetName, token, path, queryParam);
+        }
+           
+        private async Task<Stream> GetAsync(HttpClient httpClient, OpenDataDataSets datasetName, CancellationToken token = default(CancellationToken), string path = "", string queryParam = "")
+        {
+            httpClient.BaseAddress = BuildUri(httpClient.BaseAddress, datasetName);
+            return await httpClient.GetStreamAsync($"{path}{queryParam}", token);
+        }
+
+        private Uri BuildUri(Uri? inputUri, OpenDataDataSets datasetName)
+        {
+            if (!DatasetVersions.TryGetValue(datasetName, out var version))
+            {
+                _logger.LogWarning($"Dataset version not found for {datasetName}, assuming version 2");
+                version = "2";
+            }
+
+            return new Uri((inputUri ?? throw new ArgumentNullException("InputUri not set"))
+                .ToString()
+                .Replace("{datasetName}", datasetName.ToString())
+                .Replace("{version}", version));
+        }
+
+        private readonly Dictionary<OpenDataDataSets, string> DatasetVersions = new()
+        {
+            { OpenDataDataSets.Actuele10mindataKNMIstations, "2" },
+            { OpenDataDataSets.radar_forecast, "1.0" }
+        };
     }
 }

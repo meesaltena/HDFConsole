@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using System;
 
 namespace HDFConsole
 {
@@ -11,27 +12,11 @@ namespace HDFConsole
         {
             var host = CreateHostBuilder(args).Build();
 
-            var openDataService = host.Services.GetRequiredService<OpenDataService>();
-
-            var response = await openDataService.GetRecentFiles();
-            var file = response?.Files.FirstOrDefault();
-
-            if(file != null)
-            {
-                string currentDirectory = Directory.GetCurrentDirectory();
-                string fullPath = @$"{currentDirectory}\{file.Filename}";
-
-                using Stream stream = await openDataService.DownloadFile(file.Filename);
-
-                using FileStream fileStream = new FileStream(fullPath, FileMode.Create);
-                
-                await stream.CopyToAsync(fileStream);
-                
-                
-                await Console.Out.WriteLineAsync($"Wrote {file.Filename} to file");
-            }
+            var openDataClient = host.Services.GetRequiredService<OpenDataClient>();
+            await openDataClient.DownloadMostRecentFile(OpenDataDataSets.Actuele10mindataKNMIstations);
+            await openDataClient.DownloadMostRecentFile(OpenDataDataSets.radar_forecast);
         }
-
+        
         private static IHostBuilder CreateHostBuilder(string[] args)
         {
             return Host.CreateDefaultBuilder(args)
@@ -58,6 +43,7 @@ namespace HDFConsole
                              ?? throw new ArgumentNullException("baseAddress null"));
                      });
                     services.AddScoped<OpenDataService>();
+                    services.AddScoped<OpenDataClient>();
                 });
         }
     }
