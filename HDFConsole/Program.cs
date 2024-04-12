@@ -1,36 +1,41 @@
-﻿using static System.Net.WebRequestMethods;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace HDFConsole
 {
     internal class Program
     {
-        private static string baseUrl = "https://api.dataplatform.knmi.nl/open-data/v1/datasets/radar_forecast/versions/1.0/files";
-
-
-        private static string? resultString = "";
-
-        protected static async Task GetHdf()
-        {
-            // var result = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
-            HttpClient client = new HttpClient();
-            using var request = new HttpRequestMessage(HttpMethod.Get, baseUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue(apiKey);
-
-            using var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            string content = await response.Content.ReadAsStringAsync();
-            resultString = response.StatusCode.ToString();
-
-            // return JsonConvert.DeserializeObject<StatusResponse[]>(content);
-        }
-
         static async Task Main(string[] args)
         {
-            await Console.Out.WriteLineAsync("Getting HDF");
-            await GetHdf();
-            await Console.Out.WriteLineAsync(resultString);
+            var host = CreateHostBuilder(args).Build();
+
+            var openDataService = host.Services.GetRequiredService<OpenDataService>();
+            var response = await openDataService.GetOpenDataResponse();
+
+            await Console.Out.WriteLineAsync(response.ToString());
+        }
+
+        private static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddJsonFile("appsettings.json");
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    var config = context.Configuration;
+                    services.AddHttpClient<OpenDataService>(
+                     client =>
+                     {
+                         client.BaseAddress = new Uri(config["baseAddress"]
+                             ?? throw new ArgumentNullException("baseAddress null"));
+                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(config["apiKey"]
+                             ?? throw new ArgumentNullException("apiKey null"));
+                     });
+                });
         }
     }
 }
