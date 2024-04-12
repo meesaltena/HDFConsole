@@ -35,7 +35,7 @@ namespace HDFConsole
             return await Task.FromResult<OpenDataResponse?>(null);
         }
 
-        public async Task<Stream> DownloadFile(OpenDataDataSets datasetName, string fileName, CancellationToken token = default(CancellationToken))
+        public async Task<Stream?> DownloadFile(OpenDataDataSets datasetName, string fileName, CancellationToken token = default(CancellationToken))
         {
             try
             {          
@@ -44,7 +44,7 @@ namespace HDFConsole
                 if (temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
                 {
                     _logger.LogError("Temporary download URL is null");
-                    return await Task.FromResult<Stream>(Stream.Null);
+                    return null;
                 }
 
                 return await GetUriAsync("AnonymousClient", token, temporaryDownloadUrlResponse.TemporaryDownloadUrl);
@@ -54,7 +54,7 @@ namespace HDFConsole
                 _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
 
-            return await Task.FromResult<Stream>(Stream.Null);
+            return null;
         }
 
         private async Task<TemporaryDownloadUrlResponse?> GetTemporaryDownloadUrl(OpenDataDataSets datasetName, string fileName, CancellationToken token = default(CancellationToken))
@@ -68,15 +68,23 @@ namespace HDFConsole
             {
                 _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
-            return await Task.FromResult<TemporaryDownloadUrlResponse?>(null);
+            return null;
         }
 
         private async Task<Stream> GetUriAsync(string httpClientName, CancellationToken token = default(CancellationToken), string uri = "")
         {
-            using HttpClient httpClient = _httpClientFactory.CreateClient(httpClientName);
-            //TODO fix
-            httpClient.BaseAddress = new Uri((uri ?? throw new ArgumentNullException()));
-            return await httpClient.GetStreamAsync(uri, token);
+            try
+            {
+                using HttpClient httpClient = _httpClientFactory.CreateClient(httpClientName);
+                //TODO fix
+                httpClient.BaseAddress = new Uri((uri ?? throw new ArgumentNullException()));
+                return await httpClient.GetStreamAsync(uri, token);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
 
         private async Task<Stream> GetAsync(string httpClientName, OpenDataDataSets datasetName, CancellationToken token = default(CancellationToken), string path = "", string queryParam = "")
