@@ -12,9 +12,17 @@ namespace HDFConsole
             var host = CreateHostBuilder(args).Build();
 
             var openDataService = host.Services.GetRequiredService<OpenDataService>();
-            var response = await openDataService.GetOpenDataResponse();
 
-            await Console.Out.WriteLineAsync(response.ToString());
+            var response = await openDataService.GetRecentFiles();
+            var file = response?.Files.FirstOrDefault();
+
+            if(file != null)
+            {
+                string? fileContent = await openDataService.DownloadFile(file.Filename);
+
+                await Console.Out.WriteLineAsync($"Downloaded file with size {fileContent?.Length}");
+            }
+         
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args)
