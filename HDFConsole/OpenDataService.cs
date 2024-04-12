@@ -3,74 +3,83 @@ using System.Text.Json;
 
 namespace HDFConsole
 {
-    public sealed class OpenDataService(
-        HttpClient httpClient,
-        ILogger<OpenDataService> logger) : IDisposable
+    public class OpenDataService
     {
-        private readonly JsonSerializerOptions options = new JsonSerializerOptions()
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<OpenDataService> _logger;
+        private readonly JsonSerializerOptions _jsonOptions;
+
+        public OpenDataService(IHttpClientFactory httpClientFactory, ILogger<OpenDataService> logger)
         {
-            PropertyNameCaseInsensitive = true
-        };
+            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _jsonOptions = new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
+            };
+        }
 
         public async Task<OpenDataResponse?> GetRecentFiles(CancellationToken token = default(CancellationToken))
         {
             try
             {
-                Stream responseStream = await httpClient.GetStreamAsync("", token);
-                
-                OpenDataResponse? res = await JsonSerializer.DeserializeAsync<OpenDataResponse>(responseStream,options,token);
+                using HttpClient httpClient = _httpClientFactory.CreateClient("AuthorizedClient");
 
-                logger.LogInformation("OpenDataService got response with {0} files", res?.Files.Count);
+                using Stream responseStream = await httpClient.GetStreamAsync("", token);
+                
+                OpenDataResponse? res = await JsonSerializer.DeserializeAsync<OpenDataResponse>(responseStream,_jsonOptions,token);
+
+                _logger.LogInformation("OpenDataService got response with {0} files", res?.Files.Count);
 
                 return res;
             }
             catch (Exception ex)
             {
-                logger.LogError("OpenDataService Exception: {Error}", ex);
+                _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
             return null;
         }
 
-        public async Task<String?> DownloadFile(string fileName, CancellationToken token = default(CancellationToken))
+        public async Task<Stream> DownloadFile(string fileName, CancellationToken token = default(CancellationToken))
         {
             try
             {
+                using HttpClient httpClient = _httpClientFactory.CreateClient("AnonymousClient");
                 TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetTemporaryDownloadUrl(fileName, token);
 
                 if(temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
                 {
-                    logger.LogError("Temporary download URL is null");
-                    return null;
+                    _logger.LogError("Temporary download URL is null");
+                    return await Task.FromResult<Stream>(Stream.Null);
                 }   
                
-                return await httpClient.GetStringAsync(temporaryDownloadUrlResponse.TemporaryDownloadUrl, token);
-                
+                return await httpClient.GetStreamAsync(temporaryDownloadUrlResponse.TemporaryDownloadUrl, token);
             }
             catch (Exception ex)
             {
-                logger.LogError("OpenDataService Exception: {Error}", ex);
+                _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
 
-            return null;
+             return await Task.FromResult<Stream>(Stream.Null);
         }
 
         private async Task<TemporaryDownloadUrlResponse?> GetTemporaryDownloadUrl(string fileName, CancellationToken token = default(CancellationToken))
         {
             try
             {
-                Stream responseStream = await httpClient.GetStreamAsync($"{fileName}/url", token);
-                TemporaryDownloadUrlResponse? res = await JsonSerializer.DeserializeAsync<TemporaryDownloadUrlResponse>(responseStream, options, token);
+                using HttpClient httpClient = _httpClientFactory.CreateClient("AuthorizedClient");
+                using Stream responseStream = await httpClient.GetStreamAsync($"{fileName}/url", token);
+                TemporaryDownloadUrlResponse? res = await JsonSerializer.DeserializeAsync<TemporaryDownloadUrlResponse>(responseStream, _jsonOptions, token);
 
-                logger.LogInformation("OpenDataService got temporary dowload URL last modified at {0}", res?.LastModified);
+                _logger.LogInformation("OpenDataService got temporary dowload URL last modified at {0}", res?.LastModified);
 
                 return res;
             }
             catch (Exception ex)
             {
-                logger.LogError("OpenDataService Exception: {Error}", ex);
+                _logger.LogError("OpenDataService Exception: {Error}", ex);
             }
-            return null;
+            return await Task.FromResult<TemporaryDownloadUrlResponse?>(null);
         }
-        public void Dispose() => httpClient?.Dispose();
     }
 }

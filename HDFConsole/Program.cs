@@ -18,11 +18,18 @@ namespace HDFConsole
 
             if(file != null)
             {
-                string? fileContent = await openDataService.DownloadFile(file.Filename);
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string fullPath = @$"{currentDirectory}\{file.Filename}";
 
-                await Console.Out.WriteLineAsync($"Downloaded file with size {fileContent?.Length}");
+                using Stream stream = await openDataService.DownloadFile(file.Filename);
+
+                using FileStream fileStream = new FileStream(fullPath, FileMode.Create);
+                
+                await stream.CopyToAsync(fileStream);
+                
+                
+                await Console.Out.WriteLineAsync($"Wrote {file.Filename} to file");
             }
-         
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args)
@@ -35,7 +42,7 @@ namespace HDFConsole
                 .ConfigureServices((context, services) =>
                 {
                     var config = context.Configuration;
-                    services.AddHttpClient<OpenDataService>(
+                    services.AddHttpClient<OpenDataService>("AuthorizedClient",
                      client =>
                      {
                          client.BaseAddress = new Uri(config["baseAddress"]
@@ -43,6 +50,14 @@ namespace HDFConsole
                          client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(config["apiKey"]
                              ?? throw new ArgumentNullException("apiKey null"));
                      });
+
+                    services.AddHttpClient<OpenDataService>("AnonymousClient",
+                     client =>
+                     {
+                         client.BaseAddress = new Uri(config["baseAddress"]
+                             ?? throw new ArgumentNullException("baseAddress null"));
+                     });
+                    services.AddScoped<OpenDataService>();
                 });
         }
     }
