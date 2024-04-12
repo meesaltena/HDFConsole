@@ -5,7 +5,7 @@ public enum OpenDataDataSets
 {
     Actuele10mindataKNMIstations,
     Tx1,
-    radar_reflectivity_composites,
+    radar_reflectivity_composites, // https://dataplatform.knmi.nl/dataset/access/radar-reflectivity-composites-2-0 Precipitation - radar 5 minute reflectivity composites over the Netherlands
     radar_volume_full_herwijnen,
     radar_volume_denhelder,
     radar_forecast,

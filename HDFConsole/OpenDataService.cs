@@ -108,6 +108,7 @@ namespace HDFConsole
         private readonly Dictionary<OpenDataDataSets, string> DatasetVersions = new()
         {
             { OpenDataDataSets.Actuele10mindataKNMIstations, "2" },
+            { OpenDataDataSets.radar_reflectivity_composites, "2.0" },
             { OpenDataDataSets.radar_forecast, "1.0" }
         };
     }
