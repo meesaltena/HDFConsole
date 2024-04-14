@@ -28,7 +28,7 @@ namespace HDFConsole
             }
 
             string currentDirectory = Directory.GetCurrentDirectory();
-            string fullPath = @$"{currentDirectory}\{file.Filename}";
+            string fullPath = @$"{currentDirectory}{Path.DirectorySeparatorChar}{file.Filename}";
             try
             {
                 var stream = await _openDataService.DownloadFile(dataset, file.Filename);

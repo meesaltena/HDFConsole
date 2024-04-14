@@ -1,0 +1,15 @@
+﻿[Unit]
+Description=HDFConsole
+
+# replace USERNAME with linux username
+[Service]
+WorkingDirectory=/home/USERNAME/HDFConsole/HDFConsole/HDFConsole/bin/Debug/net8.0
+ExecStart=/home/USERNAME/.dotnet/dotnet /home/USERNAME/HDFConsole/HDFConsole/HDFConsole/bin/Debug/net8.0/HDFConsole.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=HDFConsole
+User=USERNAME
+
+[Install]
+WantedBy=multi-user.target
