@@ -15,7 +15,8 @@
             builder.Services.AddOptions<OpenDataServiceOptions>()
                 .Bind(builder.Configuration.GetSection("OpenDataServiceOptions"));
             builder.Services.AddHttpClient<OpenDataService>();
-      
+            builder.Services.AddMemoryCache();
+            builder.Services.AddTransient<BitmapCacheService>();
             builder.Services.AddScoped<OpenDataService>();
             builder.Services.AddScoped<OpenDataClient>();
             builder.Services.AddHostedService<PeriodicFetcher>();

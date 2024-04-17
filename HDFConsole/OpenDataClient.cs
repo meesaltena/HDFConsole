@@ -7,12 +7,13 @@ namespace HDFConsole
     {
         private readonly OpenDataService _openDataService = null!;
         private readonly ILogger<OpenDataClient> _logger = null!;
-        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger)
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger, IServiceScopeFactory serviceScopeFactory)
         {
             _openDataService = openDataService;
             _logger = logger;
+            _serviceScopeFactory = serviceScopeFactory;
         }
-
 
         public async Task DownloadMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
         {
@@ -82,11 +83,21 @@ namespace HDFConsole
             string bitmapFilename = fileName.Replace(".h5", "_image.png");
             using SKImage image = SKImage.FromBitmap(bitmap);
             using SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+            CacheImageBytes(encoded.ToArray());
             using FileStream stream = System.IO.File.OpenWrite(bitmapFilename);
             encoded.SaveTo(stream);
-
-
             _logger.LogInformation($"Saved bitmap to:{bitmapFilename}");
+        }
+
+        private void CacheImageBytes(byte[] imageData, string? fileName = "")
+        {
+            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+            {
+                BitmapCacheService _bitmapCache =
+                    scope.ServiceProvider.GetRequiredService<BitmapCacheService>();
+                _bitmapCache.SetImage((string.IsNullOrWhiteSpace(fileName) ? "latest": fileName) ,imageData);
+            }
+            _logger.LogTrace($"Cached imageData with key::{fileName}");
         }
     }
 }

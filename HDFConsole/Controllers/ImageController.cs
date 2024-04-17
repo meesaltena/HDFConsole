@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 
 namespace HDFConsole.Controllers
 {
@@ -6,11 +7,28 @@ namespace HDFConsole.Controllers
     [Route("[controller]")]
     public class ImageController : ControllerBase
     {
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        public ImageController(IServiceScopeFactory serviceScopeFactory )
+        {
+            _serviceScopeFactory = serviceScopeFactory;
+        }
+
+
         [Route("latest")]
         public ActionResult<string> GetLatestImage()
         {
-            var file = @"";
-            return File(System.IO.File.ReadAllBytes(file), "image/png");
+            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+            {
+                BitmapCacheService _bitmapCache =
+                    scope.ServiceProvider.GetRequiredService<BitmapCacheService>();
+                byte[] image = _bitmapCache.GetImage("latestImage") ?? throw new ArgumentNullException();
+                if (image == null)
+                {
+                    return "err";
+                }
+                return File(image, "image/png");
+            }
         }
     }
 }
