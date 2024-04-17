@@ -1,4 +1,6 @@
-﻿using PureHDF;
+﻿using HDFConsole.Models;
+using Microsoft.Extensions.Options;
+using PureHDF;
 using SkiaSharp;
 
 namespace HDFConsole
@@ -8,16 +10,20 @@ namespace HDFConsole
         private readonly OpenDataService _openDataService = null!;
         private readonly ILogger<OpenDataClient> _logger = null!;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger, IServiceScopeFactory serviceScopeFactory)
+        private readonly OpenDataClientOptions _options;
+
+        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger, IServiceScopeFactory serviceScopeFactory, 
+            IOptions<OpenDataClientOptions> options)
         {
             _openDataService = openDataService;
             _logger = logger;
+            _options = options.Value;
             _serviceScopeFactory = serviceScopeFactory;
         }
 
         public async Task DownloadMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
         {
-            var response = await _openDataService.GetRecentFiles(dataset, cancellationToken);
+            var response = await _openDataService.GetRecentFilesAsync(dataset, cancellationToken);
             var file = response?.Files.OrderByDescending(r => r.LastModified).FirstOrDefault();
 
             if (file == null)
@@ -26,17 +32,16 @@ namespace HDFConsole
                 return;
             }
 
-            string currentDirectory = Directory.GetCurrentDirectory();
-            string fullPath = @$"{currentDirectory}{Path.DirectorySeparatorChar}{file.Filename}";
+            string fullPath = GetDownloadDirectory() + file.Filename;
+
             try
             {
-                var stream = await _openDataService.DownloadFile(dataset, file.Filename);
+                using var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
                 if (stream != null)
                 {
-                    //TODO add cancellation token
                     using FileStream fileStream = new(fullPath, FileMode.Create);
-                    await stream.CopyToAsync(fileStream);
-                    _logger.LogInformation($"Wrote {file.Filename} to file {fullPath}");
+                    await stream.CopyToAsync(fileStream, cancellationToken);
+                    CacheLatestFileInfo(file);
                 }
                 else
                 {
@@ -48,7 +53,22 @@ namespace HDFConsole
                 _logger.LogError(e, "DownloadMostRecentFile caught exception:");
                 throw;
             }
+
+            _logger.LogInformation($"{DateTime.Now} Wrote {file.Filename} to file {fullPath}");
             ReadH5FileAndSaveAsBitMap(fullPath);
+        }
+
+        private void CacheLatestFileInfo(File? file)
+        {
+            if (file == null) return;
+
+            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+            {
+                ImageCacheService _bitmapCache =
+                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
+                _bitmapCache.SetFile(file, "latestFile");
+            }
+            _logger.LogInformation($"{DateTime.Now} Cached File {file.Filename} with key:latestFile");
         }
 
         private readonly SKColor[] infernoPalette =
@@ -86,18 +106,23 @@ namespace HDFConsole
             CacheImageBytes(encoded.ToArray());
             using FileStream stream = System.IO.File.OpenWrite(bitmapFilename);
             encoded.SaveTo(stream);
-            _logger.LogInformation($"Saved bitmap to:{bitmapFilename}");
+            _logger.LogInformation($"{DateTime.Now} Saved bitmap to:{bitmapFilename}");
         }
+
+        private string GetDownloadDirectory() => _options.ImageDownloadDirectory ?? $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}";
 
         private void CacheImageBytes(byte[] imageData, string? fileName = "")
         {
+            if (string.IsNullOrWhiteSpace(fileName))
+                fileName = "latestImage";
+
             using (IServiceScope scope = _serviceScopeFactory.CreateScope())
             {
-                BitmapCacheService _bitmapCache =
-                    scope.ServiceProvider.GetRequiredService<BitmapCacheService>();
-                _bitmapCache.SetImage((string.IsNullOrWhiteSpace(fileName) ? "latest": fileName) ,imageData);
+                ImageCacheService _bitmapCache =
+                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
+                _bitmapCache.SetImage(fileName, imageData);
             }
-            _logger.LogTrace($"Cached imageData with key::{fileName}");
+            _logger.LogInformation($" {DateTime.Now} Cached imageData with key::{fileName}");
         }
     }
 }

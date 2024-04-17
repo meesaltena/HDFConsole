@@ -1,4 +1,6 @@
-﻿namespace HDFConsole
+﻿using HDFConsole.Models;
+
+namespace HDFConsole
 {
     internal class Program
     {
@@ -16,11 +18,11 @@
                 .Bind(builder.Configuration.GetSection("OpenDataServiceOptions"));
             builder.Services.AddHttpClient<OpenDataService>();
             builder.Services.AddMemoryCache();
-            builder.Services.AddTransient<BitmapCacheService>();
+            builder.Services.AddSingleton<ImageCacheService>();
             builder.Services.AddScoped<OpenDataService>();
             builder.Services.AddScoped<OpenDataClient>();
             builder.Services.AddHostedService<PeriodicFetcher>();
-            builder.Services.AddControllers();
+            builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
            

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using HDFConsole.Models;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -20,7 +21,7 @@ namespace HDFConsole
                 PropertyNameCaseInsensitive = true
             };
         }
-        public async Task<OpenDataResponse?> GetRecentFiles(OpenDataDataSets datasetName, CancellationToken cancellationToken = default)
+        public async Task<OpenDataResponse?> GetRecentFilesAsync(OpenDataDataSets datasetName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -40,11 +41,11 @@ namespace HDFConsole
             return await Task.FromResult<OpenDataResponse?>(null);
         }
 
-        public async Task<Stream?> DownloadFile(OpenDataDataSets datasetName, string fileName, CancellationToken token = default)
+        public async Task<Stream?> DownloadFileStreamAsync(OpenDataDataSets datasetName, string fileName, CancellationToken token = default)
         {
             try
             {          
-                TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetTemporaryDownloadUrl(datasetName, fileName, token);
+                TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetRecentFilesAsync(datasetName, fileName, token);
 
                 if (temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
                 {
@@ -63,7 +64,7 @@ namespace HDFConsole
             return null;
         }
 
-        private async Task<TemporaryDownloadUrlResponse?> GetTemporaryDownloadUrl(OpenDataDataSets datasetName, string fileName, CancellationToken cancellationToken = default)
+        private async Task<TemporaryDownloadUrlResponse?> GetRecentFilesAsync(OpenDataDataSets datasetName, string fileName, CancellationToken cancellationToken = default)
         {
             try
             {
