@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using PureHDF;
-using System.Drawing;
+﻿using PureHDF;
 using SkiaSharp;
 
 namespace HDFConsole
@@ -16,9 +14,9 @@ namespace HDFConsole
         }
 
 
-        public async Task DownloadMostRecentFile(OpenDataDataSets dataset)
+        public async Task DownloadMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
         {
-            var response = await _openDataService.GetRecentFiles(dataset);
+            var response = await _openDataService.GetRecentFiles(dataset, cancellationToken);
             var file = response?.Files.OrderByDescending(r => r.LastModified).FirstOrDefault();
 
             if (file == null)

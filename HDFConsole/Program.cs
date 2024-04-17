@@ -4,29 +4,30 @@
     {
         static async Task Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-            await host.RunAsync();
-        }
-        
-        private static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
-                .ConfigureLogging((context,loggingBuilder) => {
-                    loggingBuilder.ClearProviders();
-                    loggingBuilder.AddConsole();
-                    loggingBuilder.AddConfiguration(context.Configuration.GetSection("Logging"));
+            var builder = WebApplication.CreateBuilder(args);
+            //builder.WebHost.ConfigureKestrel(options => options.)
+            builder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddConsole();
+                loggingBuilder.AddConfiguration(builder.Configuration.GetSection("Logging"));
+            });
+            builder.Services.AddOptions<OpenDataServiceOptions>()
+                .Bind(builder.Configuration.GetSection("OpenDataServiceOptions"));
+            builder.Services.AddHttpClient<OpenDataService>();
+      
+            builder.Services.AddScoped<OpenDataService>();
+            builder.Services.AddScoped<OpenDataClient>();
+            builder.Services.AddHostedService<PeriodicFetcher>();
+            builder.Services.AddControllers();
 
-                   })
-                .ConfigureServices((context, services) =>
-                {
-                    services.AddOptions<OpenDataServiceOptions>().Bind(context.Configuration.GetSection("OpenDataServiceOptions"));
-                    services.AddHttpClient<OpenDataService>();
-                    services.AddScoped<OpenDataService>();
-                    services.AddScoped<OpenDataClient>();
-                    services.AddHostedService<PeriodicFetcher>();
-                });
+            var app = builder.Build();
+           
+            //app.UseHttpsRedirection();
 
-            return hostBuilder;
+            app.MapControllers();
+
+            await app.RunAsync();
         }
     }
 }

@@ -1,20 +1,19 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System.Formats.Asn1;
-using System.Net.Http;
-using System.Text.Json;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Threading;
 
 namespace HDFConsole
 {
     public class PeriodicFetcher : BackgroundService
     {
         private readonly ILogger<PeriodicFetcher> _logger;
-        private readonly OpenDataClient _openDataClient;
+        //private readonly OpenDataClient _openDataClient;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public PeriodicFetcher(ILogger<PeriodicFetcher> logger, OpenDataClient openDataClient)
+        public PeriodicFetcher(ILogger<PeriodicFetcher> logger,IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
-            _openDataClient = openDataClient;
+            //_openDataClient = openDataClient;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,8 +21,16 @@ namespace HDFConsole
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await _openDataClient.DownloadMostRecentFile(OpenDataDataSets.radar_reflectivity_composites);
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+
+                using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+                {
+                    OpenDataClient _openDataClient =
+                        scope.ServiceProvider.GetRequiredService<OpenDataClient>();
+
+                    //TODO just predict the filename to nearest 5 minutes, no need to GetRecentFiles from API
+                    await _openDataClient.DownloadMostRecentFile(OpenDataDataSets.radar_reflectivity_composites, stoppingToken);
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                }
             }
         }
     }
