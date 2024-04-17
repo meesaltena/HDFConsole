@@ -12,7 +12,7 @@ namespace HDFConsole
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly OpenDataClientOptions _options;
 
-        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger, IServiceScopeFactory serviceScopeFactory, 
+        public OpenDataClient(OpenDataService openDataService, ILogger<OpenDataClient> logger, IServiceScopeFactory serviceScopeFactory,
             IOptions<OpenDataClientOptions> options)
         {
             _openDataService = openDataService;
@@ -32,7 +32,7 @@ namespace HDFConsole
                 return;
             }
 
-            string fullPath = GetDownloadDirectory() + file.Filename;
+            string fullPath = $"{GetDownloadDirectory()}{file.Filename}";
 
             try
             {
@@ -109,7 +109,12 @@ namespace HDFConsole
             _logger.LogInformation($"{DateTime.Now} Saved bitmap to:{bitmapFilename}");
         }
 
-        private string GetDownloadDirectory() => _options.ImageDownloadDirectory ?? $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}";
+        private string GetDownloadDirectory()
+        {
+            return !string.IsNullOrWhiteSpace(_options.AbsoluteImageDownloadDirectory)
+                ? _options.AbsoluteImageDownloadDirectory
+                : $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}";
+        }
 
         private void CacheImageBytes(byte[] imageData, string? fileName = "")
         {

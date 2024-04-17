@@ -16,6 +16,8 @@ namespace HDFConsole
             });
             builder.Services.AddOptions<OpenDataServiceOptions>()
                 .Bind(builder.Configuration.GetSection("OpenDataServiceOptions"));
+            builder.Services.AddOptions<OpenDataClientOptions>()
+                .Bind(builder.Configuration.GetSection("OpenDataClientOptions"));
             builder.Services.AddHttpClient<OpenDataService>();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<ImageCacheService>();

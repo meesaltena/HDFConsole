@@ -2,6 +2,6 @@
 {
     public class OpenDataClientOptions
     {
-        public string ImageDownloadDirectory { get; set; } = string.Empty;
+        public string AbsoluteImageDownloadDirectory { get; set; } = string.Empty;
     }
 }
