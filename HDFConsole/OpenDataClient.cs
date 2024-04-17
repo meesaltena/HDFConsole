@@ -69,7 +69,7 @@ namespace HDFConsole
             int width = imageData.GetLength(1);
             int height = imageData.GetLength(0);
 
-            using SKBitmap bitmap = new SKBitmap(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
+            using SKBitmap bitmap = new(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
 
             for (int y = 0; y < height; y++)
             {
@@ -82,12 +82,13 @@ namespace HDFConsole
             }
 
             string bitmapFilename = fileName.Replace(".h5", "_image.png");
-            _logger.LogInformation($"Saved bitmap to:{bitmapFilename}");
-
             using SKImage image = SKImage.FromBitmap(bitmap);
             using SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100);
             using FileStream stream = System.IO.File.OpenWrite(bitmapFilename);
             encoded.SaveTo(stream);
+
+
+            _logger.LogInformation($"Saved bitmap to:{bitmapFilename}");
         }
     }
 }

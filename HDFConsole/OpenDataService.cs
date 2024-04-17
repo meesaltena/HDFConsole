@@ -85,15 +85,14 @@ namespace HDFConsole
 
         private string BuildDatasetRequestBaseUri(OpenDataDataSets datasetName)
         {
-            var version = _options.DatasetVersions.FirstOrDefault(d => d.Key.Contains(datasetName.ToString())).Value;
 
-            if (string.IsNullOrWhiteSpace(version))
+            if(!_options.OpenDataDatasetVersions.TryGetValue(datasetName.ToString(), out var version))
             {
                 _logger.LogError($"Dataset version not found for {datasetName}, assuming version 2");
                 version = "2";
             }
 
-            return $"{_options.BaseAddress}"
+            return $"{_options.OpenDataBaseAddress}"
                 .Replace("{datasetName}", datasetName.ToString())
                 .Replace("{version}", version);
         }
