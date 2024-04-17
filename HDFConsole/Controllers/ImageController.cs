@@ -22,7 +22,7 @@ namespace HDFConsole.Controllers
             {
                 BitmapCacheService _bitmapCache =
                     scope.ServiceProvider.GetRequiredService<BitmapCacheService>();
-                byte[] image = _bitmapCache.GetImage("latestImage") ?? throw new ArgumentNullException();
+                byte[] image = _bitmapCache.GetImage() ?? throw new ArgumentNullException();
                 if (image == null)
                 {
                     return "err";

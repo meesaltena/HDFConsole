@@ -13,27 +13,24 @@ namespace HDFConsole
             _cache = cache;
         }
 
-        public SKBitmap SetBitmap(string fileName, SKBitmap bitmap)
+        public byte[] SetImage(byte[] imageData)
         {
-            _cache.Set(fileName, bitmap, TimeSpan.FromMinutes(6));
-            return _cache.Set("latest", bitmap, TimeSpan.FromMinutes(6));
+            return SetImage("latest", imageData);
         }
-
-        public SKBitmap? GetBitmap(string fileName)
-        {
-            _cache.TryGetValue(fileName, out SKBitmap? bitmap);
-            return bitmap;
-        } 
 
         public byte[] SetImage(string fileName, byte[] imageData)
         {
-            _cache.Set(fileName, imageData, TimeSpan.FromMinutes(6));
-            return _cache.Set("latestImage", imageData, TimeSpan.FromMinutes(6));
+            return _cache.Set(fileName, imageData, TimeSpan.FromMinutes(6));
         }
 
-        public byte[] GetImage(string fileName)
+        public byte[]? GetImage()
         {
-            _cache.TryGetValue(fileName, out byte[] image);
+            return GetImage("latest");
+        }
+
+        public byte[]? GetImage(string fileName)
+        {
+            _cache.TryGetValue(fileName, out byte[]? image);
             return image;
         }
     }
