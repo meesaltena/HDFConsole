@@ -30,15 +30,17 @@ namespace HDFConsole.Controllers
                 {
                     return Content("<p>Error: Image or file null.</p>", "text/html");
                 }
-                var base64String = Convert.ToBase64String(file.imageData);
-                var imgSrc = $"data:image/png;base64,{base64String}";
-                TimeSpan diff = DateTime.Now.Subtract(file.Created);
-                ViewData["Message"] = $"Latest image: {file.Filename}, Created: {file.Created}, ({ToRelativeTime(diff)}), Size: {file.Size/1000}KB";
-                ViewData["latestImage"] = imgSrc;
+                //var base64String = Convert.ToBase64String(file.ImageData);
+                //ViewData["Message"] = $"Latest image: {file.Filename}, Created: {file.Created}, ({ToRelativeTime(diff)}), Size: {file.Size/1000}KB";
+                //ViewData["latestImage"] = imgSrc;
+                //var imgSrc = $"data:image/png;base64,{base64String}";
+                //TimeSpan diff = DateTime.Now.Subtract(file.Created);
+                ViewData.Model = file;
+ 
                 return View("Image");
             }
         }
 
-        private string ToRelativeTime(TimeSpan diff) => $"{(int)diff.TotalMinutes}m{(int)diff.Seconds}s ago";
+        //private string ToRelativeTime(TimeSpan diff) => $"{(int)diff.TotalMinutes}m{(int)diff.Seconds}s ago";
     }
 }

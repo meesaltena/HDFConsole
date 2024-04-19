@@ -40,13 +40,15 @@ namespace HDFConsole
                 var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
                 if (stream == null) return;
               
-                file.imageData = await GetImageBytes(stream);
+                file.ImageData = await GetImageBytes(stream);
+                file.DatasetName = dataset.ToString();
+
                 CacheLatestHDFFile(file);
                 await SaveToFile(stream, fullPath); // save .H5 to file
 
 
                 string pngFilename = fullPath.Replace(".h5", "_image.png");
-                await SaveToFile(new MemoryStream(file.imageData), pngFilename); // save .PNG to file
+                await SaveToFile(new MemoryStream(file.ImageData), pngFilename); // save .PNG to file
  
                 
             }
