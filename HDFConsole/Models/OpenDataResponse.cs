@@ -1,9 +1,12 @@
-﻿public class OpenDataResponse
+﻿namespace HDFConsole.Models
 {
-    public bool IsTruncated { get; set; }
-    public int ResultCount { get; set; }
-    public List<File> Files { get; set; } = [];
-    public int MaxResults { get; set; }
-    public string StartAfterFilename { get; set; } = null!;
-    public string NextPageToken { get; set; } = null!;
+    public class OpenDataResponse
+    {
+        public bool IsTruncated { get; set; }
+        public int ResultCount { get; set; }
+        public List<HDFFile> Files { get; set; } = [];
+        public int MaxResults { get; set; }
+        public string StartAfterFilename { get; set; } = null!;
+        public string NextPageToken { get; set; } = null!;
+    }
 }

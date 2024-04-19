@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace HDFConsole
+namespace HDFConsole.Services
 {
     public class OpenDataService
     {
@@ -44,7 +44,7 @@ namespace HDFConsole
         public async Task<Stream?> DownloadFileStreamAsync(OpenDataDataSets datasetName, string fileName, CancellationToken token = default)
         {
             try
-            {          
+            {
                 TemporaryDownloadUrlResponse? temporaryDownloadUrlResponse = await GetRecentFilesAsync(datasetName, fileName, token);
 
                 if (temporaryDownloadUrlResponse?.TemporaryDownloadUrl == null)
@@ -71,8 +71,8 @@ namespace HDFConsole
                 string baseUri = BuildDatasetRequestBaseUri(datasetName);
 
                 using HttpClient httpClient = _httpClientFactory.CreateClient();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_options.ApiKey);      
-                
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_options.ApiKey);
+
                 using Stream responseStream = await httpClient.GetStreamAsync($"{baseUri}{fileName}/url", cancellationToken);
 
                 return await JsonSerializer.DeserializeAsync<TemporaryDownloadUrlResponse>(responseStream, _jsonOptions, cancellationToken);
@@ -87,7 +87,7 @@ namespace HDFConsole
         private string BuildDatasetRequestBaseUri(OpenDataDataSets datasetName)
         {
 
-            if(!_options.OpenDataDatasetVersions.TryGetValue(datasetName.ToString(), out var version))
+            if (!_options.OpenDataDatasetVersions.TryGetValue(datasetName.ToString(), out var version))
             {
                 _logger.LogError($"Dataset version not found for {datasetName}, assuming version 2");
                 version = "2";

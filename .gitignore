@@ -483,4 +483,4 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 /HDFConsole/appsettings.json
-/images
+images/

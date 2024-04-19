@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SkiaSharp;
+﻿using HDFConsole.Models;
+using HDFConsole.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HDFConsole.Controllers
 {
@@ -14,21 +15,6 @@ namespace HDFConsole.Controllers
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        [Route("image")]
-        public ActionResult<string> GetLatestImage()
-        {
-            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
-            {
-                ImageCacheService _bitmapCache =
-                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                byte[] image = _bitmapCache.GetImage("latestImage") ?? throw new ArgumentNullException();
-                if (image == null)
-                {
-                    return "err";
-                }
-                return File(image, "image/png");
-                }
-        }
 
         [Route("")]
         public IActionResult GetImage([FromQuery] string message = "Hello")
@@ -37,14 +23,14 @@ namespace HDFConsole.Controllers
             {
                 ImageCacheService _bitmapCache =
                     scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                byte[] image = _bitmapCache.GetImage("latestImage");
-                File file = _bitmapCache.GetFile("latestFile");
+                //byte[] image = _bitmapCache.GetImage("latestImage");
+                HDFFile file = _bitmapCache.GetFile("latestFile");
 
-                if (image == null || file == null)
+                if (file == null)
                 {
                     return Content("<p>Error: Image or file null.</p>", "text/html");
                 }
-                var base64String = Convert.ToBase64String(image);
+                var base64String = Convert.ToBase64String(file.imageData);
                 var imgSrc = $"data:image/png;base64,{base64String}";
                 TimeSpan diff = DateTime.Now.Subtract(file.Created);
                 ViewData["Message"] = $"Latest image: {file.Filename}, Created: {file.Created}, ({ToRelativeTime(diff)}), Size: {file.Size/1000}KB";

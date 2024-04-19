@@ -1,4 +1,5 @@
 ﻿using HDFConsole.Models;
+using HDFConsole.Services;
 using Microsoft.Extensions.Options;
 using PureHDF;
 using SkiaSharp;
@@ -21,10 +22,10 @@ namespace HDFConsole
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        public async Task DownloadMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
+        public async Task DownloadSaveAndCacheMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
         {
             var response = await _openDataService.GetRecentFilesAsync(dataset, cancellationToken);
-            var file = response?.Files.OrderByDescending(r => r.LastModified).FirstOrDefault();
+            HDFFile? file = response?.Files.OrderByDescending(r => r.LastModified).FirstOrDefault();
 
             if (file == null)
             {
@@ -36,29 +37,35 @@ namespace HDFConsole
 
             try
             {
-                using var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
-                if (stream != null)
-                {
-                    using FileStream fileStream = new(fullPath, FileMode.Create);
-                    await stream.CopyToAsync(fileStream, cancellationToken);
-                    CacheLatestFileInfo(file);
-                }
-                else
-                {
-                    _logger.LogError($"Filestream null for file {fullPath}");
-                }
+                var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
+                if (stream == null) return;
+              
+                file.imageData = await GetImageBytes(stream);
+                CacheLatestHDFFile(file);
+                await SaveToFile(stream, fullPath); // save .H5 to file
+
+
+                string pngFilename = fullPath.Replace(".h5", "_image.png");
+                await SaveToFile(new MemoryStream(file.imageData), pngFilename); // save .PNG to file
+ 
+                
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "DownloadMostRecentFile caught exception:");
                 throw;
             }
-
-            _logger.LogInformation($"{DateTime.Now} Wrote {file.Filename} to file {fullPath}");
-            ReadH5FileAndSaveAsBitMap(fullPath);
         }
 
-        private void CacheLatestFileInfo(File? file)
+        private async Task SaveToFile(Stream stream, string fullPath, CancellationToken token = default)
+        {
+            using FileStream fileStream = new(fullPath, FileMode.Create);
+            await stream.CopyToAsync(fileStream, token);
+
+            _logger.LogInformation($"{DateTime.Now} Wrote file to {fullPath}");
+        }
+
+        private void CacheLatestHDFFile(HDFFile? file)
         {
             if (file == null) return;
 
@@ -71,56 +78,47 @@ namespace HDFConsole
             _logger.LogInformation($"{DateTime.Now} Cached File {file.Filename} with key:latestFile");
         }
 
-        private readonly SKColor[] infernoPalette =
-        [
-        new SKColor(20, 11, 52),
-        new SKColor(132, 32, 107),
-        new SKColor(229, 92, 48),
-        new SKColor(246, 215, 70)
-        ];
-
-        private void ReadH5FileAndSaveAsBitMap(string fileName)
+        private async Task<byte[]> GetImageBytes(Stream inputStream, CancellationToken token = default)
         {
-            var hdfFile = H5File.OpenRead(fileName);
-            var imageGroup = hdfFile.Group("/image1");
-            var imageData = imageGroup.Dataset("image_data").Read<byte[,]>();
-
-            int width = imageData.GetLength(1);
-            int height = imageData.GetLength(0);
-
-            using SKBitmap bitmap = new(width, height);
-            var vizGroup = hdfFile.Group("/visualisation1");
-            byte[,] colorPalette = vizGroup.Dataset("color_palette").Read<byte[,]>(); // 256x3 ;
-
-            for (int y = 0; y < height; y++)
+            using (var stream = new MemoryStream())
             {
-                for (int x = 0; x < width; x++)
-                {
-                    SKColor color;
-                    byte val = imageData[y, x];
-                    if (val == 255 || val == 0)
-                    {
-                        color = SKColor.Parse("#000000");
-                    }
-                    else
-                    {
-                        int r = colorPalette[val, 0];
-                        int g = colorPalette[val, 1];
-                        int b = colorPalette[val, 2];
-                        var hex = string.Format("{0:X2}{1:X2}{2:X2}", r, g, b);
-                        color = SKColor.Parse(hex);
-                    }
-                    bitmap.SetPixel(x, y, color);
-                }
-            }
+                await inputStream.CopyToAsync(stream, token);
+                stream.Position = 0;
 
-            string bitmapFilename = fileName.Replace(".h5", "_image.png");
-            using SKImage image = SKImage.FromBitmap(bitmap);
-            using SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100);
-            CacheImageBytes(encoded.ToArray());
-            using FileStream stream = System.IO.File.OpenWrite(bitmapFilename);
-            encoded.SaveTo(stream);
-            _logger.LogInformation($"{DateTime.Now} Saved bitmap to:{bitmapFilename}");
+                using var hdfFile = H5File.Open(stream, false);
+                byte[,] imageData = hdfFile.Group("/image1").Dataset("image_data").Read<byte[,]>();
+
+                int width = imageData.GetLength(1);
+                int height = imageData.GetLength(0);
+
+                byte[,] colorPalette = hdfFile.Group("/visualisation1").Dataset("color_palette").Read<byte[,]>(); // 256x3
+
+                using SKBitmap bitmap = new(width, height);
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        byte val = imageData[y, x];
+                        if (val == 255 || val == 0)
+                        {
+                            bitmap.SetPixel(x, y, SKColor.Parse("#000000"));
+                        }
+                        else
+                        { 
+                            int r = colorPalette[val, 0];
+                            int g = colorPalette[val, 1];
+                            int b = colorPalette[val, 2];
+                            var hex = string.Format("{0:X2}{1:X2}{2:X2}", r, g, b);
+                            bitmap.SetPixel(x, y, SKColor.Parse(hex));
+                        }
+                    }
+                }
+                // TODO just return bitmap.Bytes?
+                // TODO using?
+                using SKImage image = SKImage.FromBitmap(bitmap);
+                using SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+                return encoded.ToArray();
+            }
         }
 
         private string GetDownloadDirectory()
@@ -135,21 +133,14 @@ namespace HDFConsole
                 path = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}{_options.DownloadDirectory}";
             }
             Directory.CreateDirectory(path);
-            return $"{path}{Path.DirectorySeparatorChar}";
-        }
+          
 
-        private void CacheImageBytes(byte[] imageData, string? fileName = "")
-        {
-            if (string.IsNullOrWhiteSpace(fileName))
-                fileName = "latestImage";
-
-            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+            if (string.IsNullOrWhiteSpace(_options.DownloadDirectory))
             {
-                ImageCacheService _bitmapCache =
-                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                _bitmapCache.SetImage(fileName, imageData);
+                return path;
             }
-            _logger.LogInformation($" {DateTime.Now} Cached imageData with key::{fileName}");
+
+            return $"{path}{Path.DirectorySeparatorChar}";
         }
     }
 }
