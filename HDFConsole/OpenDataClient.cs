@@ -88,14 +88,28 @@ namespace HDFConsole
             int width = imageData.GetLength(1);
             int height = imageData.GetLength(0);
 
-            using SKBitmap bitmap = new(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
+            using SKBitmap bitmap = new(width, height);
+            var vizGroup = hdfFile.Group("/visualisation1");
+            byte[,] colorPalette = vizGroup.Dataset("color_palette").Read<byte[,]>(); // 256x3 ;
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    byte colorIndex = imageData[y, x];
-                    SKColor color = infernoPalette[colorIndex % infernoPalette.Length];
+                    SKColor color;
+                    byte val = imageData[y, x];
+                    if (val == 255 || val == 0)
+                    {
+                        color = SKColor.Parse("#000000");
+                    }
+                    else
+                    {
+                        int r = colorPalette[val, 0];
+                        int g = colorPalette[val, 1];
+                        int b = colorPalette[val, 2];
+                        var hex = string.Format("{0:X2}{1:X2}{2:X2}", r, g, b);
+                        color = SKColor.Parse(hex);
+                    }
                     bitmap.SetPixel(x, y, color);
                 }
             }
@@ -108,6 +122,8 @@ namespace HDFConsole
             encoded.SaveTo(stream);
             _logger.LogInformation($"{DateTime.Now} Saved bitmap to:{bitmapFilename}");
         }
+
+
 
         private string GetDownloadDirectory()
         {
