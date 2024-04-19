@@ -123,13 +123,19 @@ namespace HDFConsole
             _logger.LogInformation($"{DateTime.Now} Saved bitmap to:{bitmapFilename}");
         }
 
-
-
         private string GetDownloadDirectory()
         {
-            return !string.IsNullOrWhiteSpace(_options.AbsoluteImageDownloadDirectory)
-                ? _options.AbsoluteImageDownloadDirectory
-                : $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}";
+            string path;
+            if (_options.Absolute)
+            {
+                path = Path.GetFullPath(_options.DownloadDirectory);
+            }
+            else
+            {
+                path = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}{_options.DownloadDirectory}";
+            }
+            Directory.CreateDirectory(path);
+            return $"{path}{Path.DirectorySeparatorChar}";
         }
 
         private void CacheImageBytes(byte[] imageData, string? fileName = "")
