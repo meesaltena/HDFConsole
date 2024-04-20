@@ -1,4 +1,5 @@
 ﻿using HDFConsole.Models;
+using HDFConsole.Models.Enums;
 using HDFConsole.Services;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Options;

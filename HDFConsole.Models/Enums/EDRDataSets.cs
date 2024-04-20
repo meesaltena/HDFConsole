@@ -1,4 +1,4 @@
-namespace HDFConsole.Models
+namespace HDFConsole.Models.Enums
 {
     // https://developer.dataplatform.knmi.nl/edr-api#collections
     public enum EDRDataSets

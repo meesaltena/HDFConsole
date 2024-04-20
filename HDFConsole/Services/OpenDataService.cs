@@ -1,4 +1,5 @@
 ﻿using HDFConsole.Models;
+using HDFConsole.Models.Enums;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;

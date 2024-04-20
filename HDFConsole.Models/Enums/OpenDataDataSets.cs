@@ -1,4 +1,4 @@
-﻿namespace HDFConsole.Models
+﻿namespace HDFConsole.Models.Enums
 {
     // https://developer.dataplatform.knmi.nl/edr-api#collections
 
@@ -8,7 +8,7 @@
         Tx1,
         // https://dataplatform.knmi.nl/dataset/access/radar-reflectivity-composites-2-0 Precipitation - radar 5 minute reflectivity composites over the Netherlands
         // https://browser.dataplatform.knmi.nl/metadata/radar_reflectivity_composites~2.0~metadata.xml XML ISO-19115 metadata
-        radar_reflectivity_composites, 
+        radar_reflectivity_composites,
         radar_volume_full_herwijnen,
         radar_volume_denhelder,
         radar_forecast,

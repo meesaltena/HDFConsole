@@ -1,4 +1,4 @@
-﻿using HDFConsole.Models;
+﻿using HDFConsole.Models.Enums;
 
 namespace HDFConsole.Services
 {
