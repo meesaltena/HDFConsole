@@ -1,4 +1,4 @@
-C# KNMI OpenData API Client for periodic downloading & saving of HDF5 radar data. Uses PureHDF
+C# KNMI OpenData API Client for periodic downloading & saving of HDF5 radar data.
 
 Note that this project is only for experiment/hobby purposes and not to be used for any serious/critical application.
 
