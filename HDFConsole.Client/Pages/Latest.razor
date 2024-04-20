@@ -12,10 +12,8 @@
 else
 {
     <div class="contentDiv">
-   
         <div class="tableDiv">
          <h4>@file.Filename</h4>
-        
             <table class="modelTable">
                 <tr>
                     <th align="left">Property</th>
@@ -43,7 +41,18 @@ else
                 </tr>
                 <tr>
                     <td>Last refreshed:</td>
-                    <td>@fetchTimeAgo <button class="btn btn-secondary light align-middle refreshButton" @onclick="RefreshImage">Refresh</button></td>
+                    <td>
+                        <table>
+                            <tr>
+                                <td >@RelativeTimeFromNow(fetchTime)</td>
+                                <td class="buttonTd">
+                                    <button class="btn btn-secondary light float-right refreshButton" @onclick="RefreshImage">
+                                        Refresh
+                                    </button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
             </table>
         </div>

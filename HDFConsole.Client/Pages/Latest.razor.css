@@ -22,6 +22,10 @@ th {
     align-items: center;
 }
 
+.refreshButton{
+    margin-left:100px;
+}
+
 .tableDiv {
     width: 70vw;
     width: 500px;
