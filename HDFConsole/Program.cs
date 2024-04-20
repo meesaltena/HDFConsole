@@ -32,7 +32,8 @@ namespace HDFConsole
                 options.AddPolicy("AllowLocalhost",
                     builder =>
                     {
-                        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                        builder.AllowAnyOrigin()
+                        //builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
                         //builder.WithOrigins("http://localhost:4200")
                                .AllowAnyHeader()
                                .AllowAnyMethod();

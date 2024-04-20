@@ -1,0 +1,15 @@
+﻿Description=HDFConsole_Client
+
+[Service]
+WorkingDirectory=/home/[username]/HDFConsole/HDFConsole/HDFConsole.Client/bin/Debug/net8.0
+ExecStart=/home/[username]/.dotnet/dotnet /home/[username]/HDFConsole/HDFConsole/HDFConsole.Client/bin/Debug/net8.0/HDFConsole.Client.dll
+Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=HDFConsole_Client
+User=[username]
+Environment=ASPNETCORE_ENVIRONMENT=Production
+
+[Install]
+WantedBy=multi-user.target
