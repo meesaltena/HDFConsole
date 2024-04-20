@@ -10,15 +10,9 @@ body {
     font-family: 'Cascadia Code';
 }
 
-img {
-    max-width: 100%;
-    height: auto;
-    border: solid;
-    border-radius: 5px;
-}
-
 th {
     font-weight: bold;
+    min-width: 150px
 }
 
 .contentDiv {
@@ -28,9 +22,17 @@ th {
     align-items: center;
 }
 
+.tableDiv {
+    width: 70vw;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .modelTable {
     overflow-x: auto;
-    text-wrap: pretty;
     word-wrap: break-word;
     table-layout: fixed;
     word-break: break-all;

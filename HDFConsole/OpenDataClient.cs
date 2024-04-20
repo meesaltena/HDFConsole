@@ -22,19 +22,7 @@ namespace HDFConsole
             _options = options.Value;
             _serviceScopeFactory = serviceScopeFactory;
         }
-        public async Task GetMetaData(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
-        {
-            var metadata = await _openDataService.DownloadMetadata(dataset);
-            if (metadata == null)
-            {
-                _logger.LogInformation("Metadata null");
-            }
-            else
-            {
-                _logger.LogInformation("Metadata ");
 
-            }
-        }
 
         public async Task DownloadAndCacheFiles(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
         {

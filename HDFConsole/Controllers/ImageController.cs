@@ -56,7 +56,7 @@ namespace HDFConsole.Controllers
             {
                 ImageCacheService _bitmapCache =
                     scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                List<HDFFile> files = _bitmapCache.GetFiles($"{datasetName}List");
+                List<HDFFile>? files = _bitmapCache.GetFiles($"{datasetName}List");
 
                 if (files == null)
                 {

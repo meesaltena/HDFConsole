@@ -1,14 +1,9 @@
 ﻿@page "/latest"
 @using HDFConsole.Models
+@using System.Text.Json
 @inject HttpClient Http
 
-<PageTitle>Latest image</PageTitle>
-
-<h1>Counter</h1>
-
-@* <p role="status">Current count: @currentCount</p> *@
-
-<button class="btn btn-primary" @onclick="RefreshImage">Refresh</button>
+<PageTitle>Latest Image</PageTitle>
 
 @if (file == null)
 {
@@ -17,8 +12,10 @@
 else
 {
     <div class="contentDiv">
-        <h2>@file.Filename</h2>
-        <div>
+   
+        <div class="tableDiv">
+         <h4>@file.Filename</h4>
+        
             <table class="modelTable">
                 <tr>
                     <th align="left">Property</th>
@@ -34,7 +31,7 @@ else
                 </tr>
                 <tr>
                     <td>Created</td>
-                    <td>@file.Created</td>
+                    <td>@file.Created (@RelativeTimeFromNow(file.Created))</td>
                 </tr>
                 <tr>
                     <td>Last Modified</td>
@@ -44,34 +41,63 @@ else
                     <td>Dataset Name</td>
                     <td>@file.DatasetName</td>
                 </tr>
+                <tr>
+                    <td>Last refreshed:</td>
+                    <td>@fetchTimeAgo <button class="btn btn-secondary light align-middle refreshButton" @onclick="RefreshImage">Refresh</button></td>
+                </tr>
             </table>
         </div>
-        <h3>Image Data</h3>
+        <h4>Image Data</h4>
         <div class="imageDiv">
-            <img src="@($"data:image/png;base64,{Convert.ToBase64String(file.ImageData)}")" alt="Image" />
+            <img class="latestImage" src="@($"data:image/png;base64,{Convert.ToBase64String(file.ImageData)}")" alt="Image" />
         </div>
     </div>
 }
 
 @code {
     private HDFFile? file;
-    private int currentCount = 0;
-    
+    private DateTime fetchTime;
+    private Timer? timer;
+    private string fetchTimeAgo = $"(Refreshed 0m0s ago)";
+
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            file = await Http.GetFromJsonAsync<HDFFile>("latest");            
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            throw;
-        }
+        await RefreshImage();
+        UpdateFetchTimeAgo();
+        timer = new Timer(Tick, null, 0, 1000);
     }
 
     private async Task RefreshImage()
     {
-        file = await Http.GetFromJsonAsync<HDFFile>("latest");
+        var response = await Http.GetAsync("latest");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            file = await JsonSerializer.DeserializeAsync<HDFFile>(stream, new JsonSerializerOptions(){PropertyNameCaseInsensitive = true});
+            fetchTime = DateTime.Now;
+        }
+    }
+
+    private void Tick(object? _)
+    {
+        UpdateFetchTimeAgo();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+
+    private void UpdateFetchTimeAgo()
+    {
+        fetchTimeAgo = $"(Refreshed {RelativeTimeFromNow((DateTime)fetchTime)})";
+    }
+
+    private string RelativeTimeFromNow(DateTime time)
+    {
+        TimeSpan diff = DateTime.Now.Subtract(time);
+        return $"{(int)diff.TotalMinutes}m{(int)diff.Seconds}s ago";
     }
 }

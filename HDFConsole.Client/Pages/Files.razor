@@ -32,7 +32,7 @@ else
                     <td>@file.Size</td>
                     <td>@file.Created</td>
                     <td>@file.LastModified</td>
-                    <td>@file.Filename</td>
+                    <td>@file.DatasetName</td>
                 </tr>
             }
         </tbody>
@@ -46,31 +46,12 @@ else
     {
         try
         {
-            
-            //var h = await Http.GetAsync("files/hello");         
-
             files = await Http.GetFromJsonAsync<HDFFile[]>("files/list");
-
-            
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
+            Console.Error.WriteLine(e.Message);
             throw;
-        }
-        
+        }  
     }
-
-
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     // //call external API
-    //     // //_httpClient.BaseAddress = new Uri("https://localhost:44312/");
-
-
-    //     // //your API action would return a collection of Customer
-    //     // //you can try to call .GetFromJsonAsync<Customer[]>() to get the expected data
-    //     // //rather than get stream
-    //     // customers = await _httpClient.GetFromJsonAsync<Customer[]>($"Customer/GetAllCustomers");
-    // }
 }

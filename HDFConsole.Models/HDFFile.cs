@@ -7,6 +7,8 @@ namespace HDFConsole.Models
         public DateTime Created { get; set; }
         public DateTime LastModified { get; set; }
         public byte[] ImageData { get; set; } = [];
-        public string DatasetName { get; set; }
+        public string DatasetName { get; set; } = string.Empty;
+        public int Width { get; set; }
+        public int Height { get; set; }
     }
 }

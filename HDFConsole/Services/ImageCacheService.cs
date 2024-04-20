@@ -22,7 +22,7 @@ namespace HDFConsole.Services
             return file;
         }
 
-        public List<HDFFile> GetFiles(string key)
+        public List<HDFFile>? GetFiles(string key)
         {
             _cache.TryGetValue(key, out List<HDFFile>? files);
             return files;
