@@ -7,54 +7,10 @@
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            color: white;
-            font-family: Verdana;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            border: solid;
-            border-radius: 5px;
-        }
-
-        th {
-            font-weight: bold;
-        }
-
-        .pagination {
-            display: inline-block;
-        }
-
-        .pagination a {
-            color: black;
-            float: left;
-            padding: 8px 16px;
-            text-decoration: none;
-        }
-
-       .pagination a.active {
-           background-color: #4CAF50;
-           color: white;
-           border-radius: 5px;
-       }
-
-       .pagination a:hover:not(.active) {
-            background-color: #ddd;
-            border-radius: 5px;
-       }
-
-    </style>
+    <link rel="stylesheet" href="~/app.css" type="text/css" />
 </head>
 <body>
-    <div style='display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;'>
-        @*         <p>@ViewData["Message"]</p>
-        <img src='@ViewData["latestImage"]' alt='Image'> *@
+    <div>
         <div class="pagination">
             @{
                 var files = (List<HDFFile>)ViewData.Model;
@@ -70,7 +26,7 @@
             <div>
                 <h3>@file.Filename</h3>
 
-                <table class="table" style="style=" text-align: left;">
+                <table class="table"">
                     <tr>
                         <th align="left">Property</th>
                         <th align="left">Value</th>

@@ -1,11 +1,9 @@
 ﻿using HDFConsole.Models;
 using HDFConsole.Models.Enums;
 using HDFConsole.Services;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Options;
 using PureHDF;
 using SkiaSharp;
-using System.Threading;
 
 namespace HDFConsole
 {
@@ -30,7 +28,8 @@ namespace HDFConsole
             if (metadata == null)
             {
                 _logger.LogInformation("Metadata null");
-            } else
+            }
+            else
             {
                 _logger.LogInformation("Metadata ");
 
@@ -49,7 +48,8 @@ namespace HDFConsole
             }
 
             List<HDFFile> fetchedFiles = new();
-            foreach (HDFFile file in files) {
+            foreach (HDFFile file in files)
+            {
                 var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
 
                 if (stream == null) continue;
@@ -58,7 +58,7 @@ namespace HDFConsole
                 file.ImageData = await GetImageBytes(stream);
                 file.DatasetName = dataset.ToString();
 
-                if(file.ImageData.Length > 0)
+                if (file.ImageData.Length > 0)
                 {
                     fetchedFiles.Add(file);
                 }
@@ -71,7 +71,7 @@ namespace HDFConsole
                 _cache.SetFiles(fetchedFiles, $"{dataset}List");
                 _logger.LogInformation($"{DateTime.Now} Cached {fetchedFiles.Count} {dataset} files with key:{dataset}List");
             }
-          
+
         }
 
         public async Task DownloadSaveAndCacheMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
@@ -91,7 +91,7 @@ namespace HDFConsole
             {
                 var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
                 if (stream == null) return;
-              
+
                 file.ImageData = await GetImageBytes(stream);
                 file.DatasetName = dataset.ToString();
 
@@ -101,8 +101,8 @@ namespace HDFConsole
 
                 string pngFilename = fullPath.Replace(".h5", "_image.png");
                 await SaveToFile(new MemoryStream(file.ImageData), pngFilename); // save .PNG to file
- 
-                
+
+
             }
             catch (Exception e)
             {
@@ -158,7 +158,7 @@ namespace HDFConsole
                             bitmap.SetPixel(x, y, SKColor.Parse("#000000"));
                         }
                         else
-                        { 
+                        {
                             int r = colorPalette[val, 0];
                             int g = colorPalette[val, 1];
                             int b = colorPalette[val, 2];
@@ -187,7 +187,7 @@ namespace HDFConsole
                 path = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}{_options.DownloadDirectory}";
             }
             Directory.CreateDirectory(path);
-          
+
 
             if (string.IsNullOrWhiteSpace(_options.DownloadDirectory))
             {

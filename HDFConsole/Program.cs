@@ -28,9 +28,9 @@ namespace HDFConsole
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
-           
-            //app.UseHttpsRedirection();
 
+            //app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.MapControllers();
 
             await app.RunAsync();
