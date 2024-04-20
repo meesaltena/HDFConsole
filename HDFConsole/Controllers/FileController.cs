@@ -2,6 +2,7 @@
 using HDFConsole.Models.Enums;
 using HDFConsole.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections;
 
 namespace HDFConsole.Controllers
 {
@@ -19,8 +20,9 @@ namespace HDFConsole.Controllers
 
         }
 
+        [HttpGet]
         [Route("list")]
-        public async Task<List<HDFFile>> GetFileList([FromQuery] string datasetName = "radar_forecast")
+        public async Task<IEnumerable<HDFFile>> GetFileList([FromQuery] string datasetName = "radar_forecast")
         {
             using IServiceScope scope = _serviceScopeFactory.CreateScope();
             ImageCacheService _bitmapCache =
@@ -30,7 +32,7 @@ namespace HDFConsole.Controllers
             if(files == null || files.Count == 0)
             {
                 _logger.LogInformation("Files cache miss, downloading and caching...");
-;                OpenDataClient _openDataClient =
+                OpenDataClient _openDataClient =
                     scope.ServiceProvider.GetRequiredService<OpenDataClient>();
                
                 await _openDataClient.DownloadAndCacheFiles(OpenDataDataSets.radar_forecast);

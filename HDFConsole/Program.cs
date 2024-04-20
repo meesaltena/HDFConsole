@@ -27,9 +27,21 @@ namespace HDFConsole
             builder.Services.AddHostedService<PeriodicFetcher>();
             builder.Services.AddControllersWithViews();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalhost",
+                    builder =>
+                    {
+                        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                        //builder.WithOrigins("http://localhost:4200")
+                               .AllowAnyHeader()
+                               .AllowAnyMethod();
+                    });
+            });
             var app = builder.Build();
 
             //app.UseHttpsRedirection();
+            app.UseCors("AllowLocalhost");
             app.UseStaticFiles();
             app.MapControllers();
 

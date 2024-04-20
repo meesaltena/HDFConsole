@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 namespace HDFConsole.Services
 {
 
+    //TODO thread safety
     public class ImageCacheService
     {
         private readonly IMemoryCache _cache;

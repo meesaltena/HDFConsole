@@ -1,0 +1,77 @@
+﻿@page "/latest"
+@using HDFConsole.Models
+@inject HttpClient Http
+
+<PageTitle>Latest image</PageTitle>
+
+<h1>Counter</h1>
+
+@* <p role="status">Current count: @currentCount</p> *@
+
+<button class="btn btn-primary" @onclick="RefreshImage">Refresh</button>
+
+@if (file == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="contentDiv">
+        <h2>@file.Filename</h2>
+        <div>
+            <table class="modelTable">
+                <tr>
+                    <th align="left">Property</th>
+                    <th align="left">Value</th>
+                </tr>
+                <tr>
+                    <td>Filename</td>
+                    <td>@file.Filename</td>
+                </tr>
+                <tr>
+                    <td>Size (bytes)</td>
+                    <td>@file.Size</td>
+                </tr>
+                <tr>
+                    <td>Created</td>
+                    <td>@file.Created</td>
+                </tr>
+                <tr>
+                    <td>Last Modified</td>
+                    <td>@file.LastModified</td>
+                </tr>
+                <tr>
+                    <td>Dataset Name</td>
+                    <td>@file.DatasetName</td>
+                </tr>
+            </table>
+        </div>
+        <h3>Image Data</h3>
+        <div class="imageDiv">
+            <img src="@($"data:image/png;base64,{Convert.ToBase64String(file.ImageData)}")" alt="Image" />
+        </div>
+    </div>
+}
+
+@code {
+    private HDFFile? file;
+    private int currentCount = 0;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            file = await Http.GetFromJsonAsync<HDFFile>("latest");            
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    private async Task RefreshImage()
+    {
+        file = await Http.GetFromJsonAsync<HDFFile>("latest");
+    }
+}

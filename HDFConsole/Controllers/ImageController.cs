@@ -19,6 +19,7 @@ namespace HDFConsole.Controllers
         // radar_forecast
         // Actuele10mindataKNMIstations
 
+
         [Route("")]
         public IActionResult GetImage([FromQuery] string datasetName = "radar_reflectivity_composites")
         {
@@ -26,22 +27,25 @@ namespace HDFConsole.Controllers
             {
                 ImageCacheService _bitmapCache =
                     scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                //byte[] image = _bitmapCache.GetImage("latestImage");
-                HDFFile file = _bitmapCache.GetFile(datasetName);
+                HDFFile? file = _bitmapCache.GetFile(datasetName);
 
                 if (file == null)
                 {
                     return Content("<p>Error: Image or file null.</p>", "text/html");
                 }
-
-                //var base64String = Convert.ToBase64String(file.ImageData);
-                //ViewData["Message"] = $"Latest image: {file.Filename}, Created: {file.Created}, ({ToRelativeTime(diff)}), Size: {file.Size/1000}KB";
-                //ViewData["latestImage"] = imgSrc;
-                //var imgSrc = $"data:image/png;base64,{base64String}";
-                //TimeSpan diff = DateTime.Now.Subtract(file.Created);
                 ViewData.Model = file;
- 
                 return View("Image");
+            }
+        }
+
+        [Route("latest")]
+        public HDFFile? GetLatestImage([FromQuery] string datasetName = "radar_reflectivity_composites")
+        {
+            using (IServiceScope scope = _serviceScopeFactory.CreateAsyncScope())
+            {
+                ImageCacheService _bitmapCache =
+                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
+                return _bitmapCache.GetFile(datasetName);             
             }
         }
 
