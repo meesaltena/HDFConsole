@@ -1,8 +1,10 @@
 ﻿using HDFConsole.Models;
 using HDFConsole.Services;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Options;
 using PureHDF;
 using SkiaSharp;
+using System.Threading;
 
 namespace HDFConsole
 {
@@ -20,6 +22,55 @@ namespace HDFConsole
             _logger = logger;
             _options = options.Value;
             _serviceScopeFactory = serviceScopeFactory;
+        }
+        public async Task GetMetaData(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
+        {
+            var metadata = await _openDataService.DownloadMetadata(dataset);
+            if (metadata == null)
+            {
+                _logger.LogInformation("Metadata null");
+            } else
+            {
+                _logger.LogInformation("Metadata ");
+
+            }
+        }
+
+        public async Task DownloadAndCacheFiles(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
+        {
+            var response = await _openDataService.GetRecentFilesAsync(dataset, cancellationToken);
+            List<HDFFile>? files = response?.Files;
+
+            if (files == null)
+            {
+                _logger.LogWarning($"Got file null response from OpenDataService");
+                return;
+            }
+
+            List<HDFFile> fetchedFiles = new();
+            foreach (HDFFile file in files) {
+                var stream = await _openDataService.DownloadFileStreamAsync(dataset, file.Filename, cancellationToken);
+
+                if (stream == null) continue;
+
+
+                file.ImageData = await GetImageBytes(stream);
+                file.DatasetName = dataset.ToString();
+
+                if(file.ImageData.Length > 0)
+                {
+                    fetchedFiles.Add(file);
+                }
+            }
+
+            using (IServiceScope scope = _serviceScopeFactory.CreateScope())
+            {
+                ImageCacheService _cache =
+                    scope.ServiceProvider.GetRequiredService<ImageCacheService>();
+                _cache.SetFiles(fetchedFiles, $"{dataset}List");
+                _logger.LogInformation($"{DateTime.Now} Cached {fetchedFiles.Count} {dataset} files with key:{dataset}List");
+            }
+          
         }
 
         public async Task DownloadSaveAndCacheMostRecentFile(OpenDataDataSets dataset, CancellationToken cancellationToken = default)
@@ -43,7 +94,7 @@ namespace HDFConsole
                 file.ImageData = await GetImageBytes(stream);
                 file.DatasetName = dataset.ToString();
 
-                CacheLatestHDFFile(file);
+                CacheHDFFile(file, dataset.ToString());
                 await SaveToFile(stream, fullPath); // save .H5 to file
 
 
@@ -67,7 +118,7 @@ namespace HDFConsole
             _logger.LogInformation($"{DateTime.Now} Wrote file to {fullPath}");
         }
 
-        private void CacheLatestHDFFile(HDFFile? file)
+        private void CacheHDFFile(HDFFile? file, string key)
         {
             if (file == null) return;
 
@@ -75,7 +126,7 @@ namespace HDFConsole
             {
                 ImageCacheService _bitmapCache =
                     scope.ServiceProvider.GetRequiredService<ImageCacheService>();
-                _bitmapCache.SetFile(file, "latestFile");
+                _bitmapCache.SetFile(file, key);
             }
             _logger.LogInformation($"{DateTime.Now} Cached File {file.Filename} with key:latestFile");
         }

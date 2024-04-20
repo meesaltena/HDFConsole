@@ -27,7 +27,12 @@ namespace HDFConsole.Services
                         scope.ServiceProvider.GetRequiredService<OpenDataClient>();
 
                     //TODO just predict the filename to nearest 5 minutes, no need to GetRecentFiles from API
+                    //await _openDataClient.GetMetaData(OpenDataDataSets.radar_reflectivity_composites, stoppingToken);
                     await _openDataClient.DownloadSaveAndCacheMostRecentFile(OpenDataDataSets.radar_reflectivity_composites, stoppingToken);
+                    //await _openDataClient.DownloadSaveAndCacheMostRecentFile(OpenDataDataSets.Actuele10mindataKNMIstations, stoppingToken);
+
+                    //await _openDataClient.DownloadAndCacheFiles(OpenDataDataSets.radar_forecast, stoppingToken);
+
                     await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
                 }
             }

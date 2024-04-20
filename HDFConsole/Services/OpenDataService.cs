@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Xml;
+using System.Xml.XPath;
 
 namespace HDFConsole.Services
 {
@@ -21,11 +23,41 @@ namespace HDFConsole.Services
                 PropertyNameCaseInsensitive = true
             };
         }
+
+        public async Task<XmlDocument> DownloadMetadata(OpenDataDataSets datasetName, CancellationToken cancellationToken = default)
+        {
+            XmlDocument doc = new XmlDocument();
+
+            try
+            {
+                string baseUri = BuildDatasetRequestBaseUri(_options.MetaDataBaseAddress, datasetName);
+                using HttpClient httpClient = _httpClientFactory.CreateClient();
+                string response = await httpClient.GetStringAsync($"{baseUri}", cancellationToken);
+               
+                doc.LoadXml(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("OpenDataService Exception: {Error}", ex);
+            }
+
+            if (doc != null && doc.HasChildNodes)
+            {
+                XPathNavigator? nav = doc.CreateNavigator();
+                nav.MoveToFollowing(XPathNodeType.Element);
+                if (nav == null) return doc;
+                var nss = nav.GetNamespacesInScope(XmlNamespaceScope.All);
+                
+                //var metadataNode = doc.SelectNodes("MD_Metadata", );
+            }
+            return doc;
+        }
+
         public async Task<OpenDataResponse?> GetRecentFilesAsync(OpenDataDataSets datasetName, CancellationToken cancellationToken = default)
         {
             try
             {
-                string baseUri = BuildDatasetRequestBaseUri(datasetName);
+                string baseUri = BuildDatasetRequestBaseUri(_options.OpenDataBaseAddress, datasetName);
 
                 using HttpClient httpClient = _httpClientFactory.CreateClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_options.ApiKey);
@@ -68,7 +100,7 @@ namespace HDFConsole.Services
         {
             try
             {
-                string baseUri = BuildDatasetRequestBaseUri(datasetName);
+                string baseUri = BuildDatasetRequestBaseUri(_options.OpenDataBaseAddress, datasetName);
 
                 using HttpClient httpClient = _httpClientFactory.CreateClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_options.ApiKey);
@@ -84,7 +116,7 @@ namespace HDFConsole.Services
             return null;
         }
 
-        private string BuildDatasetRequestBaseUri(OpenDataDataSets datasetName)
+        private string BuildDatasetRequestBaseUri(string BaseAddress, OpenDataDataSets datasetName)
         {
 
             if (!_options.OpenDataDatasetVersions.TryGetValue(datasetName.ToString(), out var version))
@@ -93,9 +125,11 @@ namespace HDFConsole.Services
                 version = "2";
             }
 
-            return $"{_options.OpenDataBaseAddress}"
+            return $"{BaseAddress}"
                 .Replace("{datasetName}", datasetName.ToString())
                 .Replace("{version}", version);
         }
+
+
     }
 }
