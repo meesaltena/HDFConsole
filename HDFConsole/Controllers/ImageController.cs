@@ -1,4 +1,5 @@
 ﻿using HDFConsole.Models;
+using HDFConsole.Models.Enums;
 using HDFConsole.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,12 @@ namespace HDFConsole.Controllers
     public class ImageController : Controller
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
-
-        public ImageController(IServiceScopeFactory serviceScopeFactory)
+        private readonly ILogger<ImageController> _logger;
+        public ImageController(IServiceScopeFactory serviceScopeFactory, ILogger<ImageController> logger)
         {
             _serviceScopeFactory = serviceScopeFactory;
+            _logger = logger;
+
         }
 
         // radar_reflectivity_composites
@@ -21,7 +24,7 @@ namespace HDFConsole.Controllers
 
 
         [Route("")]
-        public IActionResult GetImage([FromQuery] string datasetName = "radar_reflectivity_composites")
+        public async Task<IActionResult> GetImage([FromQuery] string datasetName = "radar_reflectivity_composites")
         {
             using (IServiceScope scope = _serviceScopeFactory.CreateScope())
             {
@@ -31,7 +34,18 @@ namespace HDFConsole.Controllers
 
                 if (file == null)
                 {
-                    return Content("<p>Error: Image or file null.</p>", "text/html");
+                    _logger.LogInformation("Files cache miss, downloading and caching...");
+                    OpenDataClient _openDataClient =
+                        scope.ServiceProvider.GetRequiredService<OpenDataClient>();
+
+                    if (!Enum.TryParse(datasetName, out OpenDataDataSets dataset))
+                        return Content($"<p>Error: Failed to parse enum {datasetName} or file null.</p>", "text/html");
+
+                    await _openDataClient.DownloadAndCacheFiles(dataset);
+
+                    var result = _bitmapCache.GetFiles($"{datasetName}List"); 
+                    if(result == null) return Content("<p>Error: Image or file null.</p>", "text/html");
+                    file = result.First();
                 }
                 ViewData.Model = file;
                 return View("Image");
