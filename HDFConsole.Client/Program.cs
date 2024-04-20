@@ -12,7 +12,9 @@ namespace HDFConsole.Client
             builder.RootComponents.Add<App>("#app");
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003/") });
+            string? baseAddres = builder.Configuration.GetValue<string>("BaseAddress");
+
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddres!)});
             await builder.Build().RunAsync();
         }
     }
