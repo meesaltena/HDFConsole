@@ -12,21 +12,6 @@
 }
 else
 {
-    <div>
-        <table>
-            <tr>
-                <td>Selected file index: @selectedFileIndex/@files.Length</td>
-                <td class="buttonTd">
-                    <button class="btn btn-secondary light float-right refreshButton" @onclick="NextImage">
-                        Next image
-                    </button>
-                    <button class="btn btn-success" @onclick="StartAutoplay">
-                  @*       <i class="bi bi-play"></i> *@
-                        Autoplay</button>
-                </td>
-            </tr>
-        </table>
-    </div>
     <div class="contentDiv">
         <div class="tableDiv">
             <h4>@files[selectedFileIndex].Filename</h4>
@@ -62,7 +47,27 @@ else
                 </tr>
             </table>
         </div>
-        <h4>Image Data</h4>
+        <div>
+            <table>
+                <tr>
+                    <td>
+                        <h3>Image: @selectedFileIndex/@files.Length</h3>
+                    </td>
+                    <td class="buttonTd">
+                        <button class="btn btn-secondary light float-right" @onclick="() => IncrementImage(-1)">
+                            Previous image
+                        </button>
+                        <button class="btn btn-success" @onclick="StartAutoplay">
+                            Autoplay
+                        </button>
+                        <button class="btn btn-secondary light float-left" @onclick="() => IncrementImage(1)">
+                            Next image
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        @* <h4>Image Data</h4> *@
         <div class="imageDiv">
             <img class="latestImage" src="@($"data:image/png;base64,{Convert.ToBase64String(files[selectedFileIndex].ImageData)}")" alt="Image" />
         </div>
@@ -80,8 +85,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await GetImages();
-        // UpdateFetchTimeAgo();
-        // timer = new Timer(Tick, null, 0, 1000);
     }
 
     private async Task GetImages()
@@ -107,25 +110,32 @@ else
         return $"{(int)diff.TotalMinutes}m{(int)diff.Seconds}s ago";
     }
 
-    private void NextImage(MouseEventArgs e) => ShowNextImage();
-
-    private void ShowNextImage()
+    private void IncrementImage(int inc)
     {
-        if (selectedFileIndex == files?.Length - 1)
+        if(inc > 0)
         {
-            selectedFileIndex = 0;
+            if (selectedFileIndex == files?.Length - 1) // if true
+            {
+                selectedFileIndex = 0;
+                return;
+            }
         }
         else
         {
-            selectedFileIndex++;
+            if (selectedFileIndex == 0)
+            {
+                selectedFileIndex = files!.Length -1;
+                return;
+            }
         }
+        selectedFileIndex += inc;
     }
 
     private void StartAutoplay(MouseEventArgs e)
     {
         if (!autoplay)
         {
-            timer = new Timer(Tick, null, 0, 1000);
+            timer = new Timer(Tick, null, 0, 500);
             autoplay = true;
         }
         else
@@ -138,7 +148,7 @@ else
     private void Tick(object? _)
     {
         Console.WriteLine("Timer tick");
-        ShowNextImage();
+        IncrementImage(1);
         InvokeAsync(StateHasChanged);
     }
 
