@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <None Remove="Pages\Latest.razor.css" />
+	<None Remove="Pages\Forecast.razor.css" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Pages\Latest.razor.css" />
+    <Content Include="Pages\Forecast.razor.css" />
   </ItemGroup>
 
   <ItemGroup>
