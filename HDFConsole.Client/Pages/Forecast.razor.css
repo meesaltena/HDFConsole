@@ -26,6 +26,15 @@ th {
     margin-left:100px;
 }
 
+.pagerButton{
+    min-width:90px;
+}
+
+.imagePager {
+    display: flex;
+    gap: 10px;
+}
+
 .tableDiv {
     width: 70vw;
     width: 500px;

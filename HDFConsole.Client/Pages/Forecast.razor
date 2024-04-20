@@ -14,7 +14,6 @@ else
 {
     <div class="contentDiv">
         <div class="tableDiv">
-            <h4>@files[selectedFileIndex].Filename</h4>
             <table class="modelTable">
                 <tr>
                     <th align="left">Property</th>
@@ -43,31 +42,35 @@ else
                 <tr>
                     <td>Last refreshed:</td>
                     <td>
+                        <table>
+                            <tr>
+                                <td>Image:@selectedFileIndex/@files.Length</td>
+                                <td class="imagePager">
+                                    <button class="btn btn-secondary light float-left" @onclick="() => IncrementImage(-1)">
+                                        &lt;
+                                    </button>
+                                    @if (!autoplay)
+                                    {
+                                        <button class="btn btn-success pagerButton" @onclick="ToggleAutoplay">
+                                            Autoplay
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-danger pagerButton" @onclick="ToggleAutoplay">
+                                            Stop
+                                        </button>
+                                    }
+                                    <button class="btn btn-secondary light float-right" @onclick="() => IncrementImage(1)">
+                                        &gt;
+                                    </button>
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
         </div>
-        <div>
-            <table>
-                <tr>
-                    <td>
-                        <h3>Image: @selectedFileIndex/@files.Length</h3>
-                    </td>
-                    <td class="buttonTd">
-                        <button class="btn btn-secondary light float-right" @onclick="() => IncrementImage(-1)">
-                            Previous image
-                        </button>
-                        <button class="btn btn-success" @onclick="StartAutoplay">
-                            Autoplay
-                        </button>
-                        <button class="btn btn-secondary light float-left" @onclick="() => IncrementImage(1)">
-                            Next image
-                        </button>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        @* <h4>Image Data</h4> *@
         <div class="imageDiv">
             <img class="latestImage" src="@($"data:image/png;base64,{Convert.ToBase64String(files[selectedFileIndex].ImageData)}")" alt="Image" />
         </div>
@@ -112,9 +115,9 @@ else
 
     private void IncrementImage(int inc)
     {
-        if(inc > 0)
+        if (inc > 0)
         {
-            if (selectedFileIndex == files?.Length - 1) // if true
+            if (selectedFileIndex == files?.Length - 1)
             {
                 selectedFileIndex = 0;
                 return;
@@ -124,14 +127,14 @@ else
         {
             if (selectedFileIndex == 0)
             {
-                selectedFileIndex = files!.Length -1;
+                selectedFileIndex = files!.Length - 1;
                 return;
             }
         }
         selectedFileIndex += inc;
     }
 
-    private void StartAutoplay(MouseEventArgs e)
+    private void ToggleAutoplay(MouseEventArgs e)
     {
         if (!autoplay)
         {
@@ -147,7 +150,6 @@ else
 
     private void Tick(object? _)
     {
-        Console.WriteLine("Timer tick");
         IncrementImage(1);
         InvokeAsync(StateHasChanged);
     }
