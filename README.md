@@ -10,4 +10,4 @@ Note that this project is only for experiment/hobby purposes and not to be used 
 
 Blazor WASM client to present data exposed by controllers.
 
-![forecast_files](./docs/forecast_files_75.jpg)
+![demo](./docs/demo.gif)
