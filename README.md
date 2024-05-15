@@ -4,7 +4,9 @@ Note that this project is only for experiment/hobby purposes and not to be used 
 
 ### HDFConsole
 
-.NET 8 API project with hosted service that periodically downloads & saves latest data as .H5 and .png. Images are persisted in memory cache and served via FileController & ImageController. Contains simple Views to display latest image. Uses PureHDF to handle .H5 files.
+.NET 8 API project with hosted service that periodically downloads & saves latest data as .H5 and .png. Images are persisted in memory cache and served via FileController & ImageController. Contains simple Views to display latest image. 
+
+This project uses [PureHDF](https://github.com/Apollo3zehn/PureHDF) to handle .H5 files.
 
 ### HDFConsole.Client
 
